@@ -107,8 +107,6 @@ const proxy_mode = uci.get(uciconfig, ucimain, 'proxy_mode') || 'redirect_tproxy
       ipv6_support = uci.get(uciconfig, ucimain, 'ipv6_support') || '0',
       default_interface = uci.get(uciconfig, ucicontrol, 'bind_interface');
 
-const cache_file_store_rdrc = uci.get(uciconfig, uciexp, 'cache_file_store_rdrc'),
-      cache_file_rdrc_timeout = uci.get(uciconfig, uciexp, 'cache_file_rdrc_timeout');
 
 const clash_api_enabled = uci.get(uciconfig, uciexp, 'clash_api_enabled'),
       nginx_support = uci.get(uciconfig, uciexp, 'nginx_support'),

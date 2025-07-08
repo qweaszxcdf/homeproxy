@@ -64,7 +64,7 @@ function getServiceStatus() {
 	});
 }
 
-function renderStatus(isRunning, args, version) {
+function renderStatus(isRunning, version, args) {
 	let nginx = args.features.hp_has_nginx && args.nginx_support === '1';
 	let spanTemp = '<em><span style="color:%s"><strong>%s (sing-box v%s) %s</strong></span></em>';
 	let urlParams;
@@ -151,7 +151,7 @@ return view.extend({
 			poll.add(function () {
 				return L.resolveDefault(getServiceStatus()).then((res) => {
 					var view = document.getElementById('service_status');
-					view.innerHTML = renderStatus(res, {features, nginx_support, dashboard_repo, set_dash_backend, api_port, api_secret});
+					view.innerHTML = renderStatus(res, features.version, {features, nginx_support, dashboard_repo, set_dash_backend, api_port, api_secret});
 				});
 			});
 
@@ -159,13 +159,7 @@ return view.extend({
 					E('p', { id: 'service_status' }, _('Collecting data...'))
 			]);
 		}
-
-		/* Cache all subscription info, they will be called multiple times */
-		var subs_info = hp.loadSubscriptionInfo(data[0]);
-
-		/* Cache all configured proxy nodes, they will be called multiple times */
-		var proxy_nodes = hp.loadNodesList(data[0], subs_info);
-
+		
 		s = m.section(form.NamedSection, 'config', 'homeproxy');
 
 		s.tab('routing', _('Routing Settings'));
@@ -1332,23 +1326,28 @@ return view.extend({
 			so.description = _('The current Secret is <code>' + api_secret + '</code>');
 		/* Clash API settings end */
 		/* Rule set settings start */
-		s.tab('ruleset', _('Rule set'));
+		s.tab('ruleset', _('Rule Set'));
 		o = s.taboption('ruleset', form.SectionValue, '_ruleset', form.GridSection, 'ruleset');
 		o.depends('routing_mode', 'custom');
 
 		ss = o.subsection;
-		so = ss.option(form.Flag, 'clash_api_enabled', _('Enable Clash API'));
-		so.default = so.disabled;
+		ss.addremove = true;
+		ss.rowcolors = true;
+		ss.sortable = true;
+		ss.nodescriptions = true;
+		ss.modaltitle = L.bind(hp.loadModalTitle, this, _('Rule set'), _('Add a rule set'), data[0]);
+		ss.sectiontitle = L.bind(hp.loadDefaultLabel, this, data[0]);
+		ss.renderSectionAdd = L.bind(hp.renderSectionAdd, this, ss);
 
-		so = ss.option(form.Flag, 'nginx_support', _('Nginx Support'));
-		so.rmempty = true;
-		if (! features.hp_has_nginx) {
-			so.description = _('To enable this feature you need install <b>luci-nginx</b> and <b>luci-ssl-nginx</b><br/> first');
-			so.readonly = true;
-		}
-		so.write = function(section_id, value) {
-			return uci.set(data[0], section_id, 'nginx_support', features.hp_has_nginx ? value : null);
-		}
+		so = ss.option(form.Value, 'label', _('Label'));
+		so.load = L.bind(hp.loadDefaultLabel, this, data[0]);
+		so.validate = L.bind(hp.validateUniqueValue, this, data[0], 'ruleset', 'label');
+		so.modalonly = true;
+
+		so = ss.option(form.Flag, 'enabled', _('Enable'));
+		so.default = so.enabled;
+		so.rmempty = false;
+		so.editable = true;
 
 		so = ss.option(form.ListValue, 'type', _('Type'));
 		so.value('local', _('Local'));
@@ -1357,9 +1356,9 @@ return view.extend({
 		so.rmempty = false;
 
 		so = ss.option(form.ListValue, 'format', _('Format'));
-		so.value('source', _('Source file'));
 		so.value('binary', _('Binary file'));
-		so.default = 'source';
+		so.value('source', _('Source file'));
+		so.default = 'binary';
 		so.rmempty = false;
 
 		so = ss.option(form.Value, 'path', _('Path'));
@@ -1376,7 +1375,7 @@ return view.extend({
 					return _('Expecting: %s').format(_('non-empty value'));
 
 				try {
-					var url = new URL(value);
+					let url = new URL(value);
 					if (!url.hostname)
 						return _('Expecting: %s').format(_('valid URL'));
 				}
@@ -1397,6 +1396,7 @@ return view.extend({
 			delete this.keylist;
 			delete this.vallist;
 
+			this.value('', _('Default'));
 			this.value('direct-out', _('Direct'));
 			uci.sections(data[0], 'routing_node', (res) => {
 				if (res.enabled === '1')
@@ -1405,14 +1405,14 @@ return view.extend({
 
 			return this.super('load', section_id);
 		}
-		so.default = 'direct-out';
-		so.rmempty = false;
 		so.depends('type', 'remote');
 
 		so = ss.option(form.Value, 'update_interval', _('Update interval'),
-			_('Update interval of rule set.<br/><code>1d</code> will be used if empty.'));
+			_('Update interval of rule set.'));
+		so.placeholder = '1d';
 		so.depends('type', 'remote');
 		/* Rule set settings end */
+
 
 		/* ACL settings start */
 		s.tab('control', _('Access Control'));
