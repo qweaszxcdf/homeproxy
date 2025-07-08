@@ -785,49 +785,8 @@ return view.extend({
 		so.value('direct', _('Direct'));
 		so.modalonly = true;
 
-		so = ss.taboption('field_other', form.MultiValue, 'rule_set', _('Rule set'),
-			_('Match rule set.'));
-		so.load = function(section_id) {
-			delete this.keylist;
-			delete this.vallist;
 
-			this.value('', _('-- Please choose --'));
-			uci.sections(data[0], 'ruleset', (res) => {
-				if (res.enabled === '1')
-					this.value(res['.name'], res.label);
-			});
 
-			return this.super('load', section_id);
-		}
-		so.modalonly = true;
-
-		so = ss.taboption('field_other', form.Flag, 'rule_set_ipcidr_match_source', _('Match source IP via rule set'),
-			_('Make IP CIDR in rule set used to match the source IP.'));
-		so.default = so.disabled;
-		so.modalonly = true;
-
-		so = ss.taboption('field_other', form.Flag, 'invert', _('Invert'),
-			_('Invert match result.'));
-		so.default = so.disabled;
-		so.modalonly = true;
-
-		so = ss.taboption('field_other', form.ListValue, 'outbound', _('Outbound'),
-			_('Tag of the target outbound.'));
-		so.load = function(section_id) {
-			delete this.keylist;
-			delete this.vallist;
-
-			this.value('direct-out', _('Direct'));
-			this.value('block-out', _('Block'));
-			uci.sections(data[0], 'routing_node', (res) => {
-				if (res.enabled === '1')
-					this.value(res['.name'], res.label);
-			});
-
-			return this.super('load', section_id);
-		}
-		so.rmempty = false;
-		so.editable = true;
 		/* Routing rules end */
 
 		/* DNS settings start */
@@ -1325,19 +1284,22 @@ return view.extend({
 		if (api_secret)
 			so.description = _('The current Secret is <code>' + api_secret + '</code>');
 		/* Clash API settings end */
+
 		/* Rule set settings start */
 		s.tab('ruleset', _('Rule Set'));
 		o = s.taboption('ruleset', form.SectionValue, '_ruleset', form.GridSection, 'ruleset');
 		o.depends('routing_mode', 'custom');
 
 		ss = o.subsection;
+		var prefmt = { 'prefix': 'ruleset_', 'suffix': '' };
 		ss.addremove = true;
 		ss.rowcolors = true;
 		ss.sortable = true;
 		ss.nodescriptions = true;
 		ss.modaltitle = L.bind(hp.loadModalTitle, this, _('Rule set'), _('Add a rule set'), data[0]);
 		ss.sectiontitle = L.bind(hp.loadDefaultLabel, this, data[0]);
-		ss.renderSectionAdd = L.bind(hp.renderSectionAdd, this, ss);
+		ss.renderSectionAdd = L.bind(hp.renderSectionAdd, this, ss,prefmt);
+		ss.handleAdd = L.bind(hp.handleAdd, this, ss, prefmt);
 
 		so = ss.option(form.Value, 'label', _('Label'));
 		so.load = L.bind(hp.loadDefaultLabel, this, data[0]);
