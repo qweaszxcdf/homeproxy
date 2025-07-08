@@ -16,7 +16,7 @@ import { init_action } from 'luci.sys';
 
 import {
 	calcStringMD5, wGET, decodeBase64Str,
-	getTime, isEmpty, parseURL, validation,
+	getTime, isEmpty, parseURL, validation,filterCheck,
 	HP_DIR, RUN_DIR
 } from 'homeproxy';
 
