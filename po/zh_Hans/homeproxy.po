@@ -184,7 +184,7 @@ msgstr "已应用"
 msgid "Apply"
 msgstr "应用"
 
-#: htdocs/luci-static/resources/view/homeproxy/node.js:18
+#: htdocs/luci-static/resources/view/homeproxy/node.js:19
 msgid "Are you sure to allow insecure?"
 msgstr "确定要允许不安全连接吗？"
 
@@ -342,6 +342,20 @@ msgstr "密码套件"
 #: htdocs/luci-static/resources/view/homeproxy/client.js:183
 msgid "Cisco Public DNS (208.67.222.222)"
 msgstr "思科公共 DNS（208.67.222.222）"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js:1060
+msgid "Clash API settings"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js:1090
+#: htdocs/luci-static/resources/view/homeproxy/status.js:205
+msgid "Clash dashboard version"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js:619
+#: htdocs/luci-static/resources/view/homeproxy/client.js:964
+msgid "Clash mode"
+msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:166
 msgid "Clean log"
@@ -1002,7 +1016,7 @@ msgstr "IP 版本"
 msgid "IPv4"
 msgstr "IPv4"
 
-#: htdocs/luci-static/resources/homeproxy.js:20
+#: htdocs/luci-static/resources/homeproxy.js:21
 msgid "IPv4 only"
 msgstr "仅 IPv4"
 
@@ -1011,7 +1025,7 @@ msgstr "仅 IPv4"
 msgid "IPv6"
 msgstr "IPv6"
 
-#: htdocs/luci-static/resources/homeproxy.js:21
+#: htdocs/luci-static/resources/homeproxy.js:22
 msgid "IPv6 only"
 msgstr "仅 IPv6"
 
@@ -1633,11 +1647,11 @@ msgstr "端口范围"
 msgid "Pre-shared key"
 msgstr "预共享密钥"
 
-#: htdocs/luci-static/resources/homeproxy.js:18
+#: htdocs/luci-static/resources/homeproxy.js:19
 msgid "Prefer IPv4"
 msgstr "优先 IPv4"
 
-#: htdocs/luci-static/resources/homeproxy.js:19
+#: htdocs/luci-static/resources/homeproxy.js:20
 msgid "Prefer IPv6"
 msgstr "优先 IPv6"
 
@@ -1946,7 +1960,7 @@ msgstr "保存订阅设置"
 msgid "Server"
 msgstr "服务器"
 
-#: root/usr/share/luci/menu.d/luci-app-homeproxy.json:30
+#: root/usr/share/luci/menu.d/luci-app-homeproxy.json:38
 msgid "Server Settings"
 msgstr "服务器设置"
 
@@ -1960,7 +1974,8 @@ msgstr "当 ClientHello 的 ServerName 字段为空时，选择证书所使用�
 msgid "Server settings"
 msgstr "服务器设置"
 
-#: root/usr/share/luci/menu.d/luci-app-homeproxy.json:38
+#: htdocs/luci-static/resources/view/homeproxy/client.js:1090
+#: root/usr/share/luci/menu.d/luci-app-homeproxy.json:46
 msgid "Service Status"
 msgstr "服务状态"
 
@@ -2101,6 +2116,10 @@ msgstr "订阅"
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1239
 msgid "Successfully imported %s nodes of total %s."
 msgstr "成功导入 %s 个节点，共 %s 个。"
+
+#: htdocs/luci-static/resources/view/homeproxy/ruleset.js:132
+msgid "Successfully imported %s rule-set of total %s."
+msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:86
 msgid "Successfully updated."

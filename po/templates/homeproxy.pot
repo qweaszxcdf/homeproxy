@@ -175,7 +175,7 @@ msgstr ""
 msgid "Apply"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/homeproxy/node.js:18
+#: htdocs/luci-static/resources/view/homeproxy/node.js:19
 msgid "Are you sure to allow insecure?"
 msgstr ""
 
@@ -332,6 +332,20 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:183
 msgid "Cisco Public DNS (208.67.222.222)"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js:1060
+msgid "Clash API settings"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js:1090
+#: htdocs/luci-static/resources/view/homeproxy/status.js:205
+msgid "Clash dashboard version"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js:619
+#: htdocs/luci-static/resources/view/homeproxy/client.js:964
+msgid "Clash mode"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:166
@@ -981,7 +995,7 @@ msgstr ""
 msgid "IPv4"
 msgstr ""
 
-#: htdocs/luci-static/resources/homeproxy.js:20
+#: htdocs/luci-static/resources/homeproxy.js:21
 msgid "IPv4 only"
 msgstr ""
 
@@ -990,7 +1004,7 @@ msgstr ""
 msgid "IPv6"
 msgstr ""
 
-#: htdocs/luci-static/resources/homeproxy.js:21
+#: htdocs/luci-static/resources/homeproxy.js:22
 msgid "IPv6 only"
 msgstr ""
 
@@ -1606,11 +1620,11 @@ msgstr ""
 msgid "Pre-shared key"
 msgstr ""
 
-#: htdocs/luci-static/resources/homeproxy.js:18
+#: htdocs/luci-static/resources/homeproxy.js:19
 msgid "Prefer IPv4"
 msgstr ""
 
-#: htdocs/luci-static/resources/homeproxy.js:19
+#: htdocs/luci-static/resources/homeproxy.js:20
 msgid "Prefer IPv6"
 msgstr ""
 
@@ -1919,7 +1933,7 @@ msgstr ""
 msgid "Server"
 msgstr ""
 
-#: root/usr/share/luci/menu.d/luci-app-homeproxy.json:30
+#: root/usr/share/luci/menu.d/luci-app-homeproxy.json:38
 msgid "Server Settings"
 msgstr ""
 
@@ -1933,7 +1947,8 @@ msgstr ""
 msgid "Server settings"
 msgstr ""
 
-#: root/usr/share/luci/menu.d/luci-app-homeproxy.json:38
+#: htdocs/luci-static/resources/view/homeproxy/client.js:1090
+#: root/usr/share/luci/menu.d/luci-app-homeproxy.json:46
 msgid "Service Status"
 msgstr ""
 
@@ -2062,6 +2077,10 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1239
 msgid "Successfully imported %s nodes of total %s."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/ruleset.js:132
+msgid "Successfully imported %s rule-set of total %s."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:86
@@ -2769,4 +2788,8 @@ msgstr ""
 
 #: htdocs/luci-static/resources/homeproxy.js:335
 msgid "valid uuid"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js:1097
+msgid "yacd-meta"
 msgstr ""
