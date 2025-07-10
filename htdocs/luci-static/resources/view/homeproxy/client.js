@@ -132,16 +132,11 @@ return view.extend({
 			dashboard_repo = uci.get(data[0], 'experimental', 'dashboard_repo'),
 			set_dash_backend = uci.get(data[0], 'experimental', 'set_dash_backend');
 
-		/* Cache all configured proxy nodes, they will be called multiple times */
-		let proxy_nodes = {};
-		uci.sections(data[0], 'node', (res) => {
-			let nodeaddr = ((res.type === 'direct') ? res.override_address : res.address) || '',
-			    nodeport = ((res.type === 'direct') ? res.override_port : res.port) || '';
+		/* Cache all subscription info, they will be called multiple times */
+		var subs_info = hp.loadSubscriptionInfo(data[0]);
 
-			proxy_nodes[res['.name']] =
-				String.format('[%s] %s', res.type, res.label || ((stubValidator.apply('ip6addr', nodeaddr) ?
-					String.format('[%s]', nodeaddr) : nodeaddr) + ':' + nodeport));
-		});
+		/* Cache all configured proxy nodes, they will be called multiple times */
+		var proxy_nodes = hp.loadNodesList(data[0], subs_info);
 
 		m = new form.Map('homeproxy', _('HomeProxy'),
 			_('The modern ImmortalWrt proxy platform for ARM64/AMD64.'));

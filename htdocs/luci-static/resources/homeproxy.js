@@ -232,14 +232,16 @@ return baseclass.extend({
 	},
 
 	loadSubscriptionInfo: function(uciconfig) {
-		var subs = {};
-		for (var suburl of (uci.get(uciconfig, 'subscription', 'subscription_url') || [])) {
+		var subs = [];
+		var suburls = uci.get(uciconfig, 'subscription', 'subscription_url') || [];
+		for (var suburl of suburls) {
 			const url = new URL(suburl);
 			const urlhash = this.calcStringMD5(suburl.replace(/#.*$/, ''));
-			subs[urlhash] = {
+			subs.push({
+				"hash": urlhash,
 				"url": suburl.replace(/#.*$/, ''),
 				"name": url.hash ? decodeURIComponent(url.hash.slice(1)) : url.hostname
-			};
+			});
 		}
 		return subs;
 	},

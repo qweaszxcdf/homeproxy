@@ -1266,14 +1266,6 @@ return view.extend({
 		let routing_mode = uci.get(data[0], 'config', 'routing_mode');
 		let features = data[1];
 
-		/* Cache subscription information, it will be called multiple times */
-		let subinfo = [];
-		for (let suburl of (uci.get(data[0], 'subscription', 'subscription_url') || [])) {
-			const url = new URL(suburl);
-			const urlhash = hp.calcStringMD5(suburl.replace(/#.*$/, ''));
-			const title = url.hash ? decodeURIComponent(url.hash.slice(1)) : url.hostname;
-			subinfo.push({ 'hash': urlhash, 'title': title });
-		}
 
 		m = new form.Map('homeproxy', _('Edit nodes'));
 
@@ -1293,7 +1285,7 @@ return view.extend({
 		ss = renderNodeSettings(o.subsection, data, features, main_node, routing_mode, subs_info, proxy_nodes);
 		ss.addremove = true;
 		ss.filter = function(section_id) {
-			for (let info of subinfo)
+			for (let info of subs_info)
 				if (info.hash === uci.get(data[0], section_id, 'grouphash'))
 					return false;
 
@@ -1421,13 +1413,9 @@ return view.extend({
 		/* User nodes end */
 
 		/* Subscription nodes start */
-		for (var key in subs_info) {
-			const urlhash = key,
-				  title = subs_info[key].name;
-
-			s.tab('sub_' + urlhash, _('Sub (%s)').format(title));
-
-			o = s.taboption('sub_' + urlhash, form.SectionValue, '_sub_' + urlhash, form.GridSection, 'node');
+		for (const info of subs_info) {
+			s.tab('sub_' + info.hash, _('Sub (%s)').format(info.name));
+			o = s.taboption('sub_' + info.hash, form.SectionValue, '_sub_' + info.hash, form.GridSection, 'node');
 			ss = renderNodeSettings(o.subsection, data, features, main_node, routing_mode, subs_info, proxy_nodes);
 			ss.filter = function(section_id) {
 				return (uci.get(data[0], section_id, 'grouphash') === info.hash);
