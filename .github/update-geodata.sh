@@ -10,8 +10,9 @@ check_list_update() {
 	local listrepo="$2"
 	local listref="$3"
 	local listname="$4"
-
-	local list_info="$(curl -H "Authorization: Bearer $GITHUB_TOKEN" -fsL "https://api.github.com/repos/$listrepo/commits?sha=$listref&path=$listname&per_page=1")"
+	local header_option=""
+	[ -n "$GITHUB_TOKEN" ] && header_option="-H Authorization: Bearer $GITHUB_TOKEN"
+	local list_info="$(curl $header_option -fsL "https://api.github.com/repos/$listrepo/commits?sha=$listref&path=$listname&per_page=1")"
 	local list_sha="$(echo -e "$list_info" | jq -r ".[].sha")"
 	local list_ver="$(echo -e "$list_info" | jq -r ".[].commit.message" | grep -Eo "[0-9-]+" | tr -d '-')"
 	if [ -z "$list_sha" ] || [ -z "$list_ver" ]; then
@@ -45,6 +46,6 @@ check_list_update "china_ip4" "1715173329/IPCIDR-CHINA" "master" "ipv4.txt"
 check_list_update "china_ip6" "1715173329/IPCIDR-CHINA" "master" "ipv6.txt"
 check_list_update "gfw_list" "Loyalsoldier/v2ray-rules-dat" "release" "gfw.txt"
 check_list_update "china_list" "Loyalsoldier/v2ray-rules-dat" "release" "direct-list.txt" && \
-	sed -i -e "s/full://g" -e "/:/d" "$RESOURCES_DIR/china_list.txt"
+	sed -i '' -e "s/full://g" -e "/:/d" "$RESOURCES_DIR/china_list.txt"
 
 rm -rf "$TEMP_DIR"
