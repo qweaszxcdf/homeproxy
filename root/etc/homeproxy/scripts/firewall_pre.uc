@@ -11,7 +11,7 @@ const uci = cursor();
 uci.load(cfgname);
 
 const routing_mode = uci.get(cfgname, 'config', 'routing_mode') || 'bypass_mainland_china',
-      proxy_mode = uci.get(cfgname, 'config', 'proxy_mode') || 'redirect_tproxy';
+      proxy_mode = uci.get(cfgname, 'config', 'proxy_mode') || 'tproxy';
 
 let outbound_node, tun_name;
 if (match(proxy_mode, /tun/)) {

@@ -322,14 +322,14 @@ return view.extend({
 		o = s.taboption('routing', form.ListValue, 'proxy_mode', _('Proxy mode'));
 		o.value('redirect', _('Redirect TCP'));
 		if (features.hp_has_tproxy)
-			o.value('redirect_tproxy', _('Redirect TCP + TProxy UDP'));
+			o.value('tproxy', _('TProxy TCP/UDP'));
 		if (features.hp_has_ip_full && features.hp_has_tun) {
 			o.value('redirect_tun', _('Redirect TCP + Tun UDP'));
 			o.value('tun', _('Tun TCP/UDP'));
 		} else {
 			o.description = _('To enable Tun support, you need to install <code>ip-full</code> and <code>kmod-tun</code>');
 		}
-		o.default = 'redirect_tproxy';
+		o.default = 'tproxy';
 		o.rmempty = false;
 
 		o = s.taboption('routing', form.Flag, 'ipv6_support', _('IPv6 support'));
@@ -379,7 +379,7 @@ return view.extend({
 			_('In seconds. <code>300</code> is used by default.'));
 		so.datatype = 'uinteger';
 		so.default = '300';
-		so.depends('homeproxy.config.proxy_mode', 'redirect_tproxy');
+		so.depends('homeproxy.config.proxy_mode', 'tproxy');
 		so.depends('homeproxy.config.proxy_mode', 'redirect_tun');
 		so.depends('homeproxy.config.proxy_mode', 'tun');
 		so.rmempty = false;

@@ -103,7 +103,7 @@ if (routing_mode !== 'custom') {
 	sniff_override = uci.get(uciconfig, uciroutingsetting, 'sniff_override');
 }
 
-const proxy_mode = uci.get(uciconfig, ucimain, 'proxy_mode') || 'redirect_tproxy',
+const proxy_mode = uci.get(uciconfig, ucimain, 'proxy_mode') || 'tproxy',
       ipv6_support = uci.get(uciconfig, ucimain, 'ipv6_support') || '0',
       default_interface = uci.get(uciconfig, ucicontrol, 'bind_interface');
 
@@ -286,7 +286,7 @@ function generate_outbound(node) {
 		tag: get_tag(node, 'cfg-' + node['.name'] + '-out'),
 		routing_mark: strToInt(self_mark),
 
-		server: node.address,
+		server: trim(executeCommand("resolveip " + node.address + " | awk '{print $NF}' | head -n1").stdout) || node.address,
 		server_port: strToInt(node.port),
 		/* Hysteria(2) */
 		server_ports: node.hysteria_hopping_port,
@@ -685,7 +685,6 @@ if (match(proxy_mode, /tproxy/))
 
 		listen: '::',
 		listen_port: int(tproxy_port),
-		network: 'udp',
 		udp_timeout: udp_timeout ? (udp_timeout + 's') : null,
 		sniff: true,
 		sniff_override_destination: (sniff_override === '1')

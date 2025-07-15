@@ -33,7 +33,7 @@ start_service() {
 
 	local routing_mode proxy_mode
 	config_get routing_mode "config" "routing_mode" "bypass_mainland_china"
-	config_get proxy_mode "config" "proxy_mode" "redirect_tproxy"
+	config_get proxy_mode "config" "proxy_mode" "tproxy"
 
 	local outbound_node
 	if [ "$routing_mode" != "custom" ]; then
@@ -119,7 +119,7 @@ start_service() {
 		local table_mark
 		config_get table_mark "infra" "table_mark" "100"
 		case "$proxy_mode" in
-		"redirect_tproxy")
+		"tproxy")
 			local outbound_udp_node
 			config_get outbound_udp_node "config" "main_udp_node" "nil"
 			if [ "$outbound_udp_node" != "nil" ] || [ "$routing_mode" = "custom" ]; then

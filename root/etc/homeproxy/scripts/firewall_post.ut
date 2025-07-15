@@ -72,7 +72,7 @@ let routing_port = uci.get(cfgname, 'config', 'routing_port');
 if (routing_port === 'common')
 	routing_port = uci.get(cfgname, 'infra', 'common_port') || '22,53,80,143,443,465,587,853,873,993,995,8080,8443,9418';
 
-const proxy_mode = uci.get(cfgname, 'config', 'proxy_mode') || 'redirect_tproxy',
+const proxy_mode = uci.get(cfgname, 'config', 'proxy_mode') || 'tproxy',
       ipv6_support = uci.get(cfgname, 'config', 'ipv6_support') || '0';
 
 let self_mark, redirect_port,
@@ -108,7 +108,7 @@ for (let i in control_options)
 	control_info[i] = uci.get(cfgname, 'control', i);
 
 const dns_hijacked = uci.get('dhcp', '@dnsmasq[0]', 'dns_redirect') || '0',
-      dns_port = uci.get('dhcp', '@dnsmasq[0]', 'port') || '53';
+      dns_port = '53';
 /* UCI config end */
 -%}
 
@@ -374,18 +374,21 @@ chain homeproxy_output_redir {
 }
 {% endif %}
 
-{# UDP tproxy #}
+{# tproxy #}
 {% if (match(proxy_mode, /tproxy/) && (outbound_udp_node !== 'nil' || routing_mode === 'custom')): %}
 chain homeproxy_mangle_tproxy {
 	meta l4proto udp meta mark set {{ tproxy_mark }} tproxy ip to 127.0.0.1:{{ tproxy_port }} counter accept
+	meta l4proto tcp meta mark set {{ tproxy_mark }} tproxy ip to 127.0.0.1:{{ tproxy_port }} counter accept
 	{% if (ipv6_support === '1'): %}
 	meta l4proto udp meta mark set {{ tproxy_mark }} tproxy ip6 to [::1]:{{ tproxy_port }} counter accept
+	meta l4proto tcp meta mark set {{ tproxy_mark }} tproxy ip6 to [::1]:{{ tproxy_port }} counter accept
 	{% endif %}
 }
 
 chain homeproxy_mangle_tproxy_port {
 	{% if (routing_port): %}
 	udp dport != @homeproxy_routing_port counter return
+	tcp dport != @homeproxy_routing_port counter return
 	{% endif %}
 	goto homeproxy_mangle_tproxy
 }
@@ -393,6 +396,7 @@ chain homeproxy_mangle_tproxy_port {
 chain homeproxy_mangle_mark {
 	{% if (routing_port): %}
 	udp dport != @homeproxy_routing_port counter return
+	tcp dport != @homeproxy_routing_port counter return
 	{% endif %}
 	meta l4proto udp meta mark set {{ tproxy_mark }} counter accept
 }
@@ -532,11 +536,11 @@ chain homeproxy_mangle_output {
 }
 
 chain mangle_prerouting {
-	meta nfproto { {{ (ipv6_support === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto udp jump homeproxy_mangle_lanac
+	meta nfproto { {{ (ipv6_support === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto {udp,tcp} jump homeproxy_mangle_lanac
 }
 
 chain mangle_output {
-	meta nfproto { {{ (ipv6_support === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto udp jump homeproxy_mangle_output
+	meta nfproto { {{ (ipv6_support === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto {udp,tcp} jump homeproxy_mangle_output
 }
 {% endif %}
 
@@ -631,7 +635,7 @@ chain homeproxy_mangle_tun {
 	{% if (ipv6_support === '1'): %}
 	ip6 daddr @homeproxy_mainland_addr_v6 counter return
 	{% endif /* ipv6_support */ %}
-	{% if (routing_mode !== 'custom'): %}
+	{% if (routing_mode === 'custom'): %}
 	udp dport { 80, 443 } counter reject comment "!{{ cfgname }}: Fuck you QUIC"
 	{% endif /* routing_mode */ %}
 	{% elif (routing_mode === 'proxy_mainland_china'): %}

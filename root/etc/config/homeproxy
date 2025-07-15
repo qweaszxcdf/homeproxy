@@ -25,7 +25,7 @@ config homeproxy 'config'
 	option dns_server '8.8.8.8'
 	option routing_mode 'bypass_mainland_china'
 	option routing_port 'common'
-	option proxy_mode 'redirect_tproxy'
+	option proxy_mode 'tproxy'
 	option ipv6_support '1'
 	option github_token ''
 
