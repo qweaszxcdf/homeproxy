@@ -398,7 +398,7 @@ chain homeproxy_mangle_mark {
 	udp dport != @homeproxy_routing_port counter return
 	tcp dport != @homeproxy_routing_port counter return
 	{% endif %}
-	meta l4proto udp meta mark set {{ tproxy_mark }} counter accept
+	meta l4proto {udp,tcp} meta mark set {{ tproxy_mark }} counter accept
 }
 
 chain homeproxy_mangle_lanac {
