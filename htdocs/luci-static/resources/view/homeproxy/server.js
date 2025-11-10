@@ -23,6 +23,25 @@ const callServiceList = rpc.declare({
 	expect: { '': {} }
 });
 
+const CBIGenValue = form.Value.extend({
+	__name__: 'CBI.GenValue',
+
+	renderWidget(/* ... */) {
+		let node = form.Value.prototype.renderWidget.apply(this, arguments);
+
+		if (!this.password)
+			node.classList.add('control-group');
+
+		(node.querySelector('.control-group') || node).appendChild(E('button', {
+			class: 'cbi-button cbi-button-add',
+			title: _('Generate'),
+			click: ui.createHandlerFn(this, handleGenKey, this.hp_options || this.option)
+		}, [ _('Generate') ]));
+
+		return node;
+	}
+});
+
 function getServiceStatus() {
 	return L.resolveDefault(callServiceList('homeproxy'), {}).then((res) => {
 		let isRunning = false;
@@ -47,7 +66,7 @@ function renderStatus(isRunning, version) {
 function handleGenKey(option) {
 	let section_id = this.section.section;
 	let type = this.section.getOption('type')?.formvalue(section_id);
-	let widget = L.bind(function(option) {
+	let widget = L.bind((option) => {
 		return this.map.findElement('id', 'widget.' + this.cbid(section_id).replace(/\.[^\.]+$/, '.') + option);
 	}, this);
 
@@ -59,12 +78,13 @@ function handleGenKey(option) {
 	});
 
 	if (typeof option === 'object') {
-		return callSingBoxGenerator(option.type, option.params).then((ret) => {
-			if (ret.result)
-				for (let key in option.result)
-					widget(option.result[key]).value = ret.result[key] || '';
+		return callSingBoxGenerator(option.type, option.params).then((res) => {
+			if (res.result)
+				option.callback.call(this, res.result).forEach(([k, v]) => {
+					widget(k).value = v ?? '';
+				});
 			else
-				ui.addNotification(null, E('p', _('Failed to generate %s, error: %s.').format(type, ret.error)));
+				ui.addNotification(null, E('p', _('Failed to generate %s, error: %s.').format(type, res.error)));
 		});
 	} else {
 		let password, required_method;
@@ -86,10 +106,10 @@ function handleGenKey(option) {
 				break;
 		}
 		/* AEAD */
-		(function(length) {
+		((length) => {
 			if (length && length > 0)
 				password = hp.generateRand('base64', length);
-		}(hp.shadowsocks_encrypt_length[required_method]));
+		})(hp.shadowsocks_encrypt_length[required_method]);
 
 		return widget(option).value = password;
 	}
@@ -111,8 +131,8 @@ return view.extend({
 			_('The modern ImmortalWrt proxy platform for ARM64/AMD64.'));
 
 		s = m.section(form.TypedSection);
-		s.render = function () {
-			poll.add(function () {
+		s.render = function() {
+			poll.add(() => {
 				return L.resolveDefault(getServiceStatus()).then((res) => {
 					let view = document.getElementById('service_status');
 					view.innerHTML = renderStatus(res, features.version);
@@ -201,7 +221,7 @@ return view.extend({
 		o.depends('type', 'socks');
 		o.modalonly = true;
 
-		o = s.option(form.Value, 'password', _('Password'));
+		o = s.option(CBIGenValue, 'password', _('Password'));
 		o.password = true;
 		o.depends('type', 'anytls');
 		o.depends({'type': /^(http|mixed|naive|socks)$/, 'username': /[\s\S]/});
@@ -209,17 +229,6 @@ return view.extend({
 		o.depends('type', 'shadowsocks');
 		o.depends('type', 'trojan');
 		o.depends('type', 'tuic');
-		o.renderWidget = function() {
-			let node = form.Value.prototype.renderWidget.apply(this, arguments);
-
-			(node.querySelector('.control-group') || node).appendChild(E('button', {
-				'class': 'cbi-button cbi-button-apply',
-				'title': _('Generate'),
-				'click': ui.createHandlerFn(this, handleGenKey, this.option)
-			}, [ _('Generate') ]));
-
-			return node;
-		}
 		o.validate = function(section_id, value) {
 			if (section_id) {
 				let type = this.section.formvalue(section_id, 'type');
@@ -285,6 +294,7 @@ return view.extend({
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'hysteria_auth_payload', _('Authentication payload'));
+		o.password = true;
 		o.depends({'type': 'hysteria', 'hysteria_auth_type': /[\s\S]/});
 		o.rmempty = false;
 		o.modalonly = true;
@@ -295,20 +305,10 @@ return view.extend({
 		o.depends('type', 'hysteria2');
 		o.modalonly = true;
 
-		o = s.option(form.Value, 'hysteria_obfs_password', _('Obfuscate password'));
+		o = s.option(CBIGenValue, 'hysteria_obfs_password', _('Obfuscate password'));
+		o.password = true;
 		o.depends('type', 'hysteria');
 		o.depends({'type': 'hysteria2', 'hysteria_obfs_type': /[\s\S]/});
-		o.renderWidget = function() {
-			let node = form.Value.prototype.renderWidget.apply(this, arguments);
-
-			(node.querySelector('.control-group') || node).appendChild(E('button', {
-				'class': 'cbi-button cbi-button-apply',
-				'title': _('Generate'),
-				'click': ui.createHandlerFn(this, handleGenKey, this.option)
-			}, [ _('Generate') ]));
-
-			return node;
-		}
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'hysteria_recv_window_conn', _('QUIC stream receive window'),
@@ -357,21 +357,11 @@ return view.extend({
 		o.modalonly = true;
 
 		/* Tuic config start */
-		o = s.option(form.Value, 'uuid', _('UUID'));
+		o = s.option(CBIGenValue, 'uuid', _('UUID'));
+		o.password = true;
 		o.depends('type', 'tuic');
 		o.depends('type', 'vless');
 		o.depends('type', 'vmess');
-		o.renderWidget = function() {
-			let node = form.Value.prototype.renderWidget.apply(this, arguments);
-
-			(node.querySelector('.control-group') || node).appendChild(E('button', {
-				'class': 'cbi-button cbi-button-apply',
-				'title': _('Generate'),
-				'click': ui.createHandlerFn(this, handleGenKey, this.option)
-			}, [ _('Generate') ]));
-
-			return node;
-		}
 		o.validate = hp.validateUUID;
 		o.modalonly = true;
 
@@ -669,11 +659,13 @@ return view.extend({
 			o.modalonly = true;
 
 			o = s.option(form.Value, 'tls_dns01_ali_akid', _('Access key ID'));
+			o.password = true;
 			o.depends('tls_dns01_provider', 'alidns');
 			o.rmempty = false;
 			o.modalonly = true;
 
 			o = s.option(form.Value, 'tls_dns01_ali_aksec', _('Access key secret'));
+			o.password = true;
 			o.depends('tls_dns01_provider', 'alidns');
 			o.rmempty = false;
 			o.modalonly = true;
@@ -684,6 +676,7 @@ return view.extend({
 			o.modalonly = true;
 
 			o = s.option(form.Value, 'tls_dns01_cf_api_token', _('API token'));
+			o.password = true;
 			o.depends('tls_dns01_provider', 'cloudflare');
 			o.rmempty = false;
 			o.modalonly = true;
@@ -715,49 +708,64 @@ return view.extend({
 			o.modalonly = true;
 
 			o = s.option(form.Value, 'tls_acme_ea_keyid', _('External account key ID'));
+			o.password = true;
 			o.depends('tls_acme_external_account', '1');
 			o.rmempty = false;
 			o.modalonly = true;
 
 			o = s.option(form.Value, 'tls_acme_ea_mackey', _('External account MAC key'));
+			o.password = true;
 			o.depends('tls_acme_external_account', '1');
 			o.rmempty = false;
 			o.modalonly = true;
 		}
 
-		if (features.with_reality_server) {
-			o = s.option(form.Flag, 'tls_reality', _('REALITY'));
-			o.depends({'tls': '1', 'tls_acme': '0', 'type': 'vless'});
-			o.depends({'tls': '1', 'tls_acme': null, 'type': 'vless'});
-			o.modalonly = true;
+		o = s.option(form.Flag, 'tls_reality', _('REALITY'));
+		o.depends({'tls': '1', 'tls_acme': '0', 'type': /^(anytls|vless)$/});
+		o.depends({'tls': '1', 'tls_acme': null, 'type': /^(anytls|vless)$/});
+		o.modalonly = true;
 
-			o = s.option(form.Value, 'tls_reality_private_key', _('REALITY private key'));
-			o.depends('tls_reality', '1');
-			o.rmempty = false;
-			o.modalonly = true;
-
-			o = s.option(form.DynamicList, 'tls_reality_short_id', _('REALITY short ID'));
-			o.depends('tls_reality', '1');
-			o.rmempty = false;
-			o.modalonly = true;
-
-			o = s.option(form.Value, 'tls_reality_max_time_difference', _('Max time difference'),
-				_('The maximum time difference between the server and the client.'));
-			o.depends('tls_reality', '1');
-			o.modalonly = true;
-
-			o = s.option(form.Value, 'tls_reality_server_addr', _('Handshake server address'));
-			o.datatype = 'hostname';
-			o.depends('tls_reality', '1');
-			o.rmempty = false;
-			o.modalonly = true;
-
-			o = s.option(form.Value, 'tls_reality_server_port', _('Handshake server port'));
-			o.datatype = 'port';
-			o.depends('tls_reality', '1');
-			o.rmempty = false;
-			o.modalonly = true;
+		o = s.option(CBIGenValue, 'tls_reality_private_key', _('REALITY private key'));
+		o.password = true;
+		o.hp_options = {
+			type: 'reality-keypair',
+			params: '',
+			callback: function(result) {
+				return [
+					[this.option, result.private_key],
+					['tls_reality_public_key', result.public_key]
+				]
+			}
 		}
+		o.depends('tls_reality', '1');
+		o.rmempty = false;
+		o.modalonly = true;
+
+		o = s.option(form.Value, 'tls_reality_public_key', _('REALITY public key'));
+		o.depends('tls_reality', '1');
+		o.modalonly = true;
+
+		o = s.option(form.DynamicList, 'tls_reality_short_id', _('REALITY short ID'));
+		o.depends('tls_reality', '1');
+		o.rmempty = false;
+		o.modalonly = true;
+
+		o = s.option(form.Value, 'tls_reality_max_time_difference', _('Max time difference'),
+			_('The maximum time difference between the server and the client.'));
+		o.depends('tls_reality', '1');
+		o.modalonly = true;
+
+		o = s.option(form.Value, 'tls_reality_server_addr', _('Handshake server address'));
+		o.datatype = 'hostname';
+		o.depends('tls_reality', '1');
+		o.rmempty = false;
+		o.modalonly = true;
+
+		o = s.option(form.Value, 'tls_reality_server_port', _('Handshake server port'));
+		o.datatype = 'port';
+		o.depends('tls_reality', '1');
+		o.rmempty = false;
+		o.modalonly = true;
 
 		o = s.option(form.Value, 'tls_cert_path', _('Certificate path'),
 			_('The server public key, in PEM format.'));
@@ -805,9 +813,11 @@ return view.extend({
 		o.hp_options = {
 			type: 'ech-keypair',
 			params: '',
-			result: {
-				ech_key: o.option,
-				ech_cfg: 'tls_ech_config'
+			callback: function(result) {
+				return [
+					[this.option, result.ech_key],
+					['tls_ech_config', result.ech_cfg]
+				]
 			}
 		}
 		o.renderWidget = function(section_id, option_index, cfgvalue) {
@@ -823,7 +833,7 @@ return view.extend({
 				}),
 				E('button', {
 					class: 'cbi-button cbi-button-add',
-					click: ui.createHandlerFn(this, function() {
+					click: ui.createHandlerFn(this, () => {
 						this.hp_options.params = document.getElementById(cbid).value;
 
 						return handleGenKey.call(this, this.hp_options);

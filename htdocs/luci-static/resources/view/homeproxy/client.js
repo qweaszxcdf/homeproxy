@@ -1013,7 +1013,7 @@ return view.extend({
 		so.value('tcp', _('TCP'));
 		so.value('tls', _('TLS'));
 		so.value('https', _('HTTPS'));
-		so.value('http3', _('HTTP3'));
+		so.value('h3', _('HTTP/3'));
 		so.value('quic', _('QUIC'));
 		so.default = 'udp';
 		so.rmempty = false;
@@ -1025,6 +1025,7 @@ return view.extend({
 
 		so = ss.option(form.Value, 'server_port', _('Port'),
 			_('The port of the DNS server.'));
+		so.placeholder = 'auto';
 		so.datatype = 'port';
 
 		so = ss.option(form.Value, 'path', _('Path'),
@@ -1084,6 +1085,7 @@ return view.extend({
 			_('The domain strategy for resolving the domain name in the address.'));
 		for (let i in hp.dns_strategy)
 			so.value(i, hp.dns_strategy[i]);
+		so.depends({'address_resolver': '', '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.option(form.ListValue, 'outbound', _('Outbound'),
