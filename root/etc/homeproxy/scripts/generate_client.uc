@@ -857,7 +857,7 @@ if (!isEmpty(main_node)) {
 				if (!(type in ['selector', 'urltest'])) {
 					config.outbounds[length(config.outbounds)-1].bind_interface = cfg.bind_interface;
 					config.outbounds[length(config.outbounds)-1].inet6_bind_address = trim(executeCommand('ip -6 addr show ' + cfg.bind_interface + ' | grep "inet6" | grep dynamic | awk \'{print $2}\' | cut -d\'/\' -f1').stdout);
-					config.outbounds[length(config.outbounds)-1].detour = get_outbound(cfg.outbound) || ((type !== 'direct') ? 'node_outgress' : null);
+					config.outbounds[length(config.outbounds)-1].detour = get_outbound(cfg.outbound);
 					if (cfg.domain_resolver || cfg.domain_strategy)
 					config.outbounds[length(config.outbounds)-1].domain_resolver = {
 						server: get_resolver(cfg.domain_resolver),
@@ -889,6 +889,7 @@ while (length(nodes_tobe_checkedout) > 0) {
 		if (!(k in checkedout_nodes)) {
 			const outbound = uci.get_all(uciconfig, k) || {};
 			push(config.outbounds, generate_outbound(outbound));
+			config.outbounds[length(config.outbounds)-1].detour = "node_outgress";
 			push(checkedout_nodes, k);
 		}
 	});
