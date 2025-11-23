@@ -79,10 +79,9 @@ let self_mark, redirect_port,
     tproxy_port, tproxy_mark,
     tun_name, tun_mark;
 
-if (match(proxy_mode, /redirect/)) {
 	self_mark = uci.get(cfgname, 'infra', 'self_mark') || '100';
-	redirect_port = uci.get(cfgname, 'infra', 'redirect_port') || '5331';
-}
+if (match(proxy_mode, /redirect/)) {
+	redirect_port = uci.get(cfgname, 'infra', 'redirect_port') || '5331';}
 if (match(proxy_mode, /tproxy/))
 	if (outbound_udp_node !== 'nil' || routing_mode === 'custom') {
 		tproxy_port = uci.get(cfgname, 'infra', 'tproxy_port') || '5332';

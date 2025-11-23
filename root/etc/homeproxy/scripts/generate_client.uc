@@ -109,7 +109,6 @@ if (routing_mode !== 'custom') {
 }
 
 const proxy_mode = uci.get(uciconfig, ucimain, 'proxy_mode') || 'tproxy',
-      ipv6_support = uci.get(uciconfig, ucimain, 'ipv6_support') || '0',
       default_interface = uci.get(uciconfig, ucicontrol, 'bind_interface');
 
 

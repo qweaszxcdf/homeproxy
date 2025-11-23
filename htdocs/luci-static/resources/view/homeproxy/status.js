@@ -60,7 +60,7 @@ function getConnStat(o, site) {
 	]);
 }
 
-function getResVersion(self, type, repo) {
+function getResVersion(o, type, repo) {
 	var callResVersion = rpc.declare({
 		object: 'luci.homeproxy',
 		method: 'resources_get_version',
@@ -256,19 +256,19 @@ return view.extend({
 		}
 
 		o = s.option(form.DummyValue, '_china_ip4_version', _('China IPv4 list version'));
-		o.cfgvalue = L.bind(getResVersion, this, o, 'china_ip4');
+		o.cfgvalue = function() { return getResVersion(this, 'china_ip4', ''); };
 		o.rawhtml = true;
 
 		o = s.option(form.DummyValue, '_china_ip6_version', _('China IPv6 list version'));
-		o.cfgvalue = L.bind(getResVersion, this, o, 'china_ip6');
+		o.cfgvalue = function() { return getResVersion(this, 'china_ip6', ''); };
 		o.rawhtml = true;
 
 		o = s.option(form.DummyValue, '_china_list_version', _('China list version'));
-		o.cfgvalue = L.bind(getResVersion, this, o, 'china_list');
+		o.cfgvalue = function() { return getResVersion(this, 'china_list', ''); };
 		o.rawhtml = true;
 
 		o = s.option(form.DummyValue, '_gfw_list_version', _('GFW list version'));
-		o.cfgvalue = L.bind(getResVersion, this, o, 'gfw_list');
+		o.cfgvalue = function() { return getResVersion(this, 'gfw_list', ''); };
 		o.rawhtml = true;
 
 		o = s.option(form.Value, 'github_token', _('GitHub token'));
