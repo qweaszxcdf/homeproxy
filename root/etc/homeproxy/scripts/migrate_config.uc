@@ -80,8 +80,8 @@ if (uci.get(uciconfig, ucimain, 'routing_port') === 'all')
 	uci.delete(uciconfig, ucimain, 'routing_port');
 
 /* experimental section was removed */
-if (uci.get(uciconfig, 'experimental'))
-	uci.delete(uciconfig, 'experimental');
+//if (uci.get(uciconfig, 'experimental'))
+//	uci.delete(uciconfig, 'experimental');
 
 /* block-dns was removed from built-in dns servers */
 const default_dns_server = uci.get(uciconfig, ucidns, 'default_server');
