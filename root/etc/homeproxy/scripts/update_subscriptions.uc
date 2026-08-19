@@ -13,7 +13,6 @@ import { connect } from 'ubus';
 import { cursor } from 'uci';
 
 import { urldecode, urlencode } from 'luci.http';
-import { init_action } from 'luci.sys';
 
 import {
 	calcStringMD5, wGET, decodeBase64Str,
@@ -64,6 +63,10 @@ function log(...args) {
 	const logfile = open(`${RUN_DIR}/homeproxy.log`, 'a');
 	logfile.write(`${getTime()} [SUBSCRIBE] ${join(' ', args)}\n`);
 	logfile.close();
+}
+
+function service_action(action) {
+	return system([ '/etc/init.d/homeproxy', action ]);
 }
 
 function parse_uri(uri) {
@@ -122,7 +125,7 @@ function parse_uri(uri) {
 		case 'hysteria':
 			/* https://github.com/HyNetwork/hysteria/wiki/URI-Scheme */
 			url = parseURL('http://' + uri[1]) || {};
-			params = url.searchParams;
+			params = url.searchParams || {};
 
 			if (!sing_features.with_quic || (params.protocol && params.protocol !== 'udp')) {
 				log(sprintf('Skipping unsupported %s node: %s.', uri[0], urldecode(url.hash) || url.hostname));
@@ -154,7 +157,7 @@ function parse_uri(uri) {
 		case 'hy2':
 			/* https://v2.hysteria.network/docs/developers/URI-Scheme/ */
 			url = parseURL('http://' + uri[1]) || {};
-			params = url.searchParams;
+			params = url.searchParams || {};
 
 			if (!sing_features.with_quic) {
 				log(sprintf('Skipping unsupported %s node: %s.', uri[0], urldecode(url.hash) || url.hostname));
@@ -304,7 +307,7 @@ function parse_uri(uri) {
 		case 'vless':
 			/* https://github.com/XTLS/Xray-core/discussions/716 */
 			url = parseURL('http://' + uri[1]) || {};
-			params = url.searchParams;
+			params = url.searchParams || {};
 
 			/* Unsupported protocol */
 			if (params.type === 'kcp') {
@@ -462,7 +465,7 @@ function parse_uri(uri) {
 function main() {
 	if (via_proxy !== '1') {
 		log('Stopping service...');
-		init_action('homeproxy', 'stop');
+		service_action('stop');
 	}
 
 	for (let url in subscription_urls) {
@@ -533,7 +536,7 @@ function main() {
 
 		if (via_proxy !== '1') {
 			log('Starting service...');
-			init_action('homeproxy', 'start');
+			service_action('start');
 		}
 
 		return false;
@@ -633,8 +636,8 @@ function main() {
 
 	if (need_restart) {
 		log('Restarting service...');
-		init_action('homeproxy', 'stop');
-		init_action('homeproxy', 'start');
+		service_action('stop');
+		service_action('start');
 	}
 
 	log(sprintf('%s nodes added, %s removed.', added, removed));
@@ -650,6 +653,6 @@ if (!isEmpty(subscription_urls))
 		log(e.stacktrace[0].context);
 
 		log('Restarting service...');
-		init_action('homeproxy', 'stop');
-		init_action('homeproxy', 'start');
+		service_action('stop');
+		service_action('start');
 	}
