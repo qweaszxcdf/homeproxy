@@ -788,9 +788,8 @@ function renderNodeSettings(section, data, features, main_node, routing_mode, su
 	o = s.option(form.MultiValue, 'group', _('Subscription Groups'),
 		_('List of subscription groups.'));
 	o.value('', _('-- Please choose --'));
-	for (var key in subs_info) {
-		let title = subs_info[key].name;
-		o.value(key, _('Sub (%s)').format(title));
+	for (const info of subs_info) {
+		o.value(info.hash, _('Sub (%s)').format(info.name));
 	}
 	o.depends('type', 'selector');
 	o.depends('type', 'urltest');
