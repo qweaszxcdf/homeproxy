@@ -1,2 +1,2 @@
 root/etc/homeproxy/resources/* merge=ours
-po/* merge=ours
+po/templates/** merge=ours

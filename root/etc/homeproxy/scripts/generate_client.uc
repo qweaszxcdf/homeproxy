@@ -910,6 +910,7 @@ while (length(groups_tobe_checkedout) > 0) {
 	uci.foreach(uciconfig, ucinode, (cfg) => {
 		if (!(cfg['.name'] in checkedout_nodes) && match(cfg?.grouphash, hashexp)) {
 			push(config.outbounds, generate_outbound(cfg));
+			config.outbounds[length(config.outbounds)-1].detour = "node_outgress";
 			push(checkedout_nodes, cfg['.name']);
 		}
 	});
