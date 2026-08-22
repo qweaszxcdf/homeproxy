@@ -168,6 +168,14 @@ let checkedout_nodes = [],
     nodes_tobe_checkedout = [],
     checkedout_groups = [],
     groups_tobe_checkedout = [];
+
+const sub_selector_detours = [
+		{ tag_prefix: '[U] ', detour: 'unicom' },
+		{ tag_prefix: '[T] ', detour: 'telecom' }
+	  ];
+let sub_selector_node_variants = {},
+    sub_selector_node_variants_generated = {},
+    sub_selector_node_originals = {};
 /* UCI config end */
 
 /* Config helper start */
@@ -236,6 +244,51 @@ function get_tag(cfg, failback_tag, filterable) {
 		node.label) :
 		(failback_tag || null);
 }
+function append_sub_selector_tags(outbounds, selector, node, failback_tag, filterable) {
+	if (selector?.['.name'] && match(selector['.name'], /^sub_/) && node?.grouphash &&
+		node?.label) {
+		if (!isEmpty(filterable) && filterCheck(node.label, filterable.filter_nodes, filterable.filter_keywords))
+			return;
+
+		const variants = [];
+		for (let detour in sub_selector_detours)
+			push(variants, {
+				tag: detour.tag_prefix + node.label,
+				detour: detour.detour
+			});
+		sub_selector_node_variants[node['.name']] = variants;
+		for (let variant in variants)
+			push(outbounds, variant.tag);
+		return;
+	}
+
+	const tag = get_tag(node, failback_tag, filterable);
+	if (tag && node?.grouphash && node?.label)
+		sub_selector_node_originals[node['.name']] = true;
+	push(outbounds, tag);
+}
+function has_config_outbound(outbounds, tag) {
+	if (isEmpty(tag))
+		return false;
+
+	for (let outbound in outbounds)
+		if (outbound?.tag === tag)
+			return true;
+	return false;
+}
+function append_sub_selector_variants(outbounds, node_name, outbound, variants) {
+	if (isEmpty(variants))
+		return;
+
+	if (sub_selector_node_originals[node_name] && !has_config_outbound(outbounds, outbound.tag))
+		push(outbounds, { ...outbound, detour: 'node_outgress' });
+	if (sub_selector_node_variants_generated[node_name])
+		return;
+
+	for (let variant in variants)
+		push(outbounds, { ...outbound, tag: variant.tag, detour: variant.detour });
+	sub_selector_node_variants_generated[node_name] = true;
+}
 function generate_endpoint(node) {
 	if (type(node) !== 'object' || isEmpty(node))
 		return null;
@@ -279,26 +332,40 @@ function generate_outbound(node) {
 		for (let grouphash in node.group) {
 			if (!isEmpty(grouphash)) {
 				const output = executeCommand(`/sbin/uci -q show ${shellQuote(uciconfig)} | /bin/grep "\.grouphash='*${shellQuote(grouphash)}'*" | /usr/bin/cut -f2 -d'.'`) || 	{};
-				if (!isEmpty(trim(output.stdout)))
-					for (let order in split(trim(output.stdout), /\n/))
-						push(outbounds, get_tag(order, 'cfg-' + order + '-out', { "filter_nodes": node.filter_nodes, "filter_keywords": node.filter_keywords }));
+				if (!isEmpty(trim(output.stdout))) {
+					for (let order in split(trim(output.stdout), /\n/)) {
+						const order_node = uci.get_all(uciconfig, order) || order;
+						append_sub_selector_tags(outbounds, node, order_node, 'cfg-' + order + '-out', { "filter_nodes": node.filter_nodes, "filter_keywords": node.filter_keywords });
+					}
+				}
 				if (!(grouphash in groups_tobe_checkedout))
 					push(groups_tobe_checkedout, grouphash);
 			}
 		}
 		for (let order in node.order) {
-			push(outbounds, get_tag(order, 'cfg-' + order + '-out', { "filter_nodes": node.filter_nodes, "filter_keywords": node.filter_keywords }));
+			const order_node = uci.get_all(uciconfig, order) || order;
+			append_sub_selector_tags(outbounds, node, order_node, 'cfg-' + order + '-out', { "filter_nodes": node.filter_nodes, "filter_keywords": node.filter_keywords });
 			if (!(order in ['direct-out', 'block-out']) && !(order in nodes_tobe_checkedout))
 				push(nodes_tobe_checkedout, order);
 		}
 		if (length(outbounds) === 0)
 			push(outbounds, 'direct-out', 'block-out');
+		let default_selected = null;
+		if (node.default_selected) {
+			const variants = match(node['.name'], /^sub_/) ? sub_selector_node_variants[node.default_selected] : null;
+			if (!variants) {
+				const default_node = uci.get_all(uciconfig, node.default_selected) || {};
+				if (default_node.grouphash && default_node.label)
+					sub_selector_node_originals[default_node['.name']] = true;
+			}
+			default_selected = !isEmpty(variants) ? variants[0].tag : get_tag(node.default_selected, 'cfg-' + node.default_selected + '-out');
+		}
 		return {
 			type: node.type,
 			tag: get_tag(node, 'cfg-' + node['.name'] + '-out'),
 			/* Selector */
 			outbounds: outbounds,
-			default: node.default_selected ? (get_tag(node.default_selected, 'cfg-' + node.default_selected + '-out')) : null,
+			default: default_selected,
 			/* URLTest */
 			url: node.test_url,
 			interval: node.interval,
@@ -856,8 +923,9 @@ if (!isEmpty(main_node)) {
 				push(config.outbounds, generate_outbound(outbound));
 				const type = config.outbounds[length(config.outbounds)-1].type;
 				if (!(type in ['selector', 'urltest'])) {
-					config.outbounds[length(config.outbounds)-1].bind_interface = cfg.bind_interface;
-					config.outbounds[length(config.outbounds)-1].inet6_bind_address = trim(executeCommand('ip -6 addr show ' + cfg.bind_interface + ' | grep "inet6" | grep dynamic | awk \'{print $2}\' | cut -d\'/\' -f1').stdout);
+					const bind_interface = !isEmpty(cfg.bind_interface) && cfg.bind_interface !== 'null' ? cfg.bind_interface : null;
+					config.outbounds[length(config.outbounds)-1].bind_interface = bind_interface;
+					config.outbounds[length(config.outbounds)-1].inet6_bind_address = bind_interface ? trim(executeCommand('ip -6 addr show ' + shellQuote(bind_interface) + ' | grep "inet6" | grep dynamic | awk \'{print $2}\' | cut -d\'/\' -f1').stdout) : null;
 					config.outbounds[length(config.outbounds)-1].detour = get_outbound(cfg.outbound);
 					if (cfg.domain_resolver || cfg.domain_strategy)
 					config.outbounds[length(config.outbounds)-1].domain_resolver = {
@@ -887,10 +955,15 @@ while (length(nodes_tobe_checkedout) > 0) {
 
 	nodes_tobe_checkedout = [];
 	map(oldarr, (k) => {
-		if (!(k in checkedout_nodes)) {
-			const outbound = uci.get_all(uciconfig, k) || {};
-			push(config.outbounds, generate_outbound(outbound));
-			config.outbounds[length(config.outbounds)-1].detour = "node_outgress";
+		const variants = sub_selector_node_variants[k];
+		if (!(k in checkedout_nodes) || !isEmpty(variants)) {
+			const outbound = generate_outbound(uci.get_all(uciconfig, k) || {});
+			if (!isEmpty(variants)) {
+				append_sub_selector_variants(config.outbounds, k, outbound, variants);
+			} else {
+				outbound.detour = "node_outgress";
+				push(config.outbounds, outbound);
+			}
 			push(checkedout_nodes, k);
 		}
 	});
@@ -908,9 +981,15 @@ while (length(groups_tobe_checkedout) > 0) {
 	});
 	const hashexp = regexp('^' + replace(replace(replace(sprintf("%J", newarr), /^\[(.*)\]$/g, "($1)"), /[" ]/g, ''), ',', '|') + '$', 'is');
 	uci.foreach(uciconfig, ucinode, (cfg) => {
-		if (!(cfg['.name'] in checkedout_nodes) && match(cfg?.grouphash, hashexp)) {
-			push(config.outbounds, generate_outbound(cfg));
-			config.outbounds[length(config.outbounds)-1].detour = "node_outgress";
+		const variants = sub_selector_node_variants[cfg['.name']];
+		if ((!(cfg['.name'] in checkedout_nodes) || !isEmpty(variants)) && match(cfg?.grouphash, hashexp)) {
+			const outbound = generate_outbound(cfg);
+			if (!isEmpty(variants)) {
+				append_sub_selector_variants(config.outbounds, cfg['.name'], outbound, variants);
+			} else {
+				outbound.detour = "node_outgress";
+				push(config.outbounds, outbound);
+			}
 			push(checkedout_nodes, cfg['.name']);
 		}
 	});
